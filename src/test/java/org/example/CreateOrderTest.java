@@ -5,9 +5,8 @@ import org.apache.http.HttpStatus;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
+import com.github.javafaker.Faker;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import static org.hamcrest.Matchers.equalTo;
 
@@ -15,16 +14,21 @@ public class CreateOrderTest {
     String bearerToken;
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://stellarburgers.nomoreparties.site";
+        RestAssured.baseURI = Constants.BASE_URI;
     }
     @Test
     public void testWithLoginCreateOrder(){
-        UserApi.createUser("karabaeva.guzel@yandex.ru", "12345", "Guzel");
-        bearerToken = UserApi.loginUser("karabaeva.guzel@yandex.ru1", "123451")
+        Faker faker = new Faker();
+        String name = faker.name().firstName();
+        String password = faker.internet().password();
+        String email = faker.internet().emailAddress();
+        UserApi.createUser(email, password, name);
+        bearerToken = UserApi.loginUser(email, password)
                 .then()
                 .extract()
                 .path("accessToken");
-        ArrayList<String> ingredients = new ArrayList<>(Arrays.asList("61c0c5a71d1f82001bdaaa6d","61c0c5a71d1f82001bdaaa6f","61c0c5a71d1f82001bdaaa72"));
+
+        ArrayList<String> ingredients = OrderApi.getIngredients(3);
         OrderApi.createOrder(bearerToken, ingredients)
                 .then()
                 .assertThat()
@@ -34,7 +38,7 @@ public class CreateOrderTest {
     }
     @Test
     public void testWithoutLoginCreateOrder(){
-        ArrayList<String> ingredients = new ArrayList<>(Arrays.asList("61c0c5a71d1f82001bdaaa6d","61c0c5a71d1f82001bdaaa6f","61c0c5a71d1f82001bdaaa72"));
+        ArrayList<String> ingredients = OrderApi.getIngredients(3);
         OrderApi.createOrder(bearerToken, ingredients)
                 .then()
                 .assertThat()
@@ -54,7 +58,7 @@ public class CreateOrderTest {
     }
     @Test
     public void testWithWrongIngredientsCreateOrder(){
-        ArrayList<String> ingredients = new ArrayList<>(Arrays.asList("60d3b41abdacab0026a733c6","609646e4dc916e00276b2870"));
+        ArrayList<String> ingredients = Constants.WRONG_INGREDIENTS;
         OrderApi.createOrder(bearerToken, ingredients)
                 .then()
                 .assertThat()

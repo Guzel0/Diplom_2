@@ -1,5 +1,6 @@
 package org.example;
 
+import com.github.javafaker.Faker;
 import io.restassured.RestAssured;
 import org.apache.http.HttpStatus;
 import org.junit.After;
@@ -10,40 +11,47 @@ import static org.hamcrest.Matchers.*;
 
 public class CreateUserTest {
     String bearerToken;
+    String name;
+    String password;
+    String email;
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://stellarburgers.nomoreparties.site";
+        RestAssured.baseURI = Constants.BASE_URI;
+        Faker faker = new Faker();
+        this.name = faker.name().firstName();
+        this.password = faker.internet().password();
+        this.email = faker.internet().emailAddress();
     }
     @Test
     public void testForCreateUser(){
-        UserApi.createUser("karabaeva.guzel@yandex.ru", "12345", "Guzel")
+        UserApi.createUser(email, password, name)
                 .then()
                 .assertThat()
                 .body("success", equalTo(true))
                 .and()
                 .statusCode(HttpStatus.SC_OK);
-        bearerToken = UserApi.loginUser("karabaeva.guzel@yandex.ru", "12345")
+        bearerToken = UserApi.loginUser(email, password)
                 .then()
                 .extract()
                 .path("accessToken");
     }
     @Test
     public void testForUniqueUser(){
-        UserApi.createUser("karabaeva.guzel@yandex.ru", "12345", "Guzel");
-        UserApi.createUser("karabaeva.guzel@yandex.ru", "12345", "Guzel")
+        UserApi.createUser(email, password, name);
+        UserApi.createUser(email, password, name)
                 .then()
                 .assertThat()
                 .body("message", equalTo("User already exists"))
                 .and()
                 .statusCode(HttpStatus.SC_FORBIDDEN);
-        bearerToken = UserApi.loginUser("karabaeva.guzel@yandex.ru", "12345")
+        bearerToken = UserApi.loginUser(email, password)
                 .then()
                 .extract()
                 .path("accessToken");
     }
     @Test
     public void testForRequiredEmail(){
-        UserApi.createUser(null, "12345", "Guzel")
+        UserApi.createUser(null, password, name)
                 .then()
                 .assertThat()
                 .body("message", equalTo("Email, password and name are required fields"))

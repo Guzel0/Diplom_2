@@ -1,13 +1,11 @@
 package org.example;
 
+import com.github.javafaker.Faker;
 import io.restassured.RestAssured;
 import org.apache.http.HttpStatus;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import static org.hamcrest.Matchers.equalTo;
 
@@ -15,12 +13,16 @@ public class GetUserOrdersTest {
     String bearerToken;
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://stellarburgers.nomoreparties.site";
+        RestAssured.baseURI = Constants.BASE_URI;
     }
     @Test
     public void testWithLoginGetUserOrders(){
-        UserApi.createUser("karabaeva.guzel@yandex.ru", "12345", "Guzel");
-        bearerToken = UserApi.loginUser("karabaeva.guzel@yandex.ru", "12345")
+        Faker faker = new Faker();
+        String name = faker.name().firstName();
+        String password = faker.internet().password();
+        String email = faker.internet().emailAddress();
+        UserApi.createUser(email, password, name);
+        bearerToken = UserApi.loginUser(email, password)
                 .then()
                 .extract()
                 .path("accessToken");
